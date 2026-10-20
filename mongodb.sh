@@ -43,5 +43,5 @@ validate $? "Restarting MongoDB..........."
 
 systemctl status mongod | tee -a $logs_file
 netstat -lntp | tee -a $logs_file
-nslookup redis.devops92s.store | tee -a $logs_file
+nslookup mongodb.devops92s.store | tee -a $logs_file
 ss -lntp | grep 27017 | tee -a $logs_file
