@@ -11,7 +11,7 @@ do
 
     instance_id=$(aws ec2 run-instances \
         --image-id $ami_id \
-        --instance_type $instance_type \
+        --instance-type $instance_type \
         --security-groups "my-ip" "roboshop-${instance}" \
         --tag-specification "ResourceType=instance,Tags[{key=Name,Value=roboshop-${Instance}}]" \
         --query 'Instances[0].InstanceId' \
@@ -35,20 +35,22 @@ do
     fi
 
 
-    # Update Route 53 Records
+    # update R53 record
     echo "Record: ${r53_record}"
     aws route53 change-resource-record-sets \
         --hosted-zone-id $hosted_zone_id \
         --change-batch '{
             "Changes": [
+                {
                 "Action": "UPSERT",
                 "ResourceRecordSet": {
-                    "Name":"'${r53_record}'",
-                    "Type:"A",
-                    "TTL":1,
-                     "ResourceRecords": [{"Value": "'$IP'"}]
+                    "Name": "'$r53_record'",
+                    "Type": "A",
+                    "TTL": 1,
+                    "ResourceRecords": [{"Value": "'$IP'"}]
                 }
-            ] 
+                }
+            ]
         }'
 
         echo "Updated R53 record for $instance"
