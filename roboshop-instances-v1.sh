@@ -20,20 +20,32 @@ do
 
     echo "$instance instance ID: $instance_id"
 
+    # read -r private_ip public_ip < <(
+    #     aws ec2 describe-instances \
+    #         --instance-ids "$instance_id" \
+    #         --query 'Reservations[].Instances[].[PrivateIpAddress,PublicIpAddress]' \
+    #         --output text
+    #     )
+
+    private_ip=$(aws ec2 describe-instances --instance-ids $instance_id \
+            --query 'Reservations[].Instances[].PrivateIpAddress' --output text
+        )
+
+    public_ip=$(aws ec2 describe-instances --instance-ids $instance_id \
+            --query 'Reservations[].Instances[].PublicIpAddress' --output text
+        )
+
     # Fetch the IP Addresses
     echo "Fetching the Ip Addresses"
     if [ $instance != "frontend" ]; then
-        IP=$(aws ec2 describe-instances --instance-ids $instance_id \
-            --query 'Reservations[].Instances[].PrivateIpAddress' --output text
-        )
+        IP=$private_ip
         r53_record="${instance}.${domain_name}"
     else
-        IP=$(aws ec2 describe-instances --instance-ids $instance_id \
-            --query 'Reservations[].Instances[].PublicIpAddress' --output text
-        )
+        IP=$public_ip
         r53_record="${domain_name}"
     fi
 
+    echo "================== Instance created for $instance with public-ip=$public_ip and private-ip=$private_ip ==============="
     echo "Successfully fetched IP=${IP} and Record: ${r53_record}"
 
     # update R53 record
@@ -42,13 +54,13 @@ do
         --change-batch '{
             "Changes": [
                 {
-                "Action": "UPSERT",
-                "ResourceRecordSet": {
-                    "Name": "'$r53_record'",
-                    "Type": "A",
-                    "TTL": 1,
-                    "ResourceRecords": [{"Value": "'$IP'"}]
-                }
+                    "Action": "UPSERT",
+                    "ResourceRecordSet": {
+                        "Name": "'$r53_record'",
+                        "Type": "A",
+                        "TTL": 1,
+                        "ResourceRecords": [{"Value": "'$IP'"}]
+                    }
                 }
             ]
         }'
