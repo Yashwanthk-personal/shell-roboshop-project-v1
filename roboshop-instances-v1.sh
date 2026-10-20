@@ -34,9 +34,9 @@ do
         r53_record="${domain_name}"
     fi
 
+    echo "Successfully fetched IP=${IP} and Record: ${r53_record}"
 
     # update R53 record
-    echo "Record: ${r53_record}"
     aws route53 change-resource-record-sets \
         --hosted-zone-id $hosted_zone_id \
         --change-batch '{
