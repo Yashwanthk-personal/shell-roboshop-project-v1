@@ -41,8 +41,8 @@ mysql_secure_installation --set-root-pass RoboShop@1  &>> $logs_file
 validate $? "Setup MySQL root password"
 
 systemctl status mysqld | tee -a $logs_file
-ss -lntp | grep 3306 | | tee -a $logs_file
-mysql -u root -pRoboShop@1 -e "SELECT VERSION();" | | tee -a $logs_file
+ss -lntp | grep 3306 | tee -a $logs_file
+mysql -u root -pRoboShop@1 -e "SELECT VERSION();" | tee -a $logs_file
 
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
 echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
