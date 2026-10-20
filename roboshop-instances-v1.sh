@@ -13,7 +13,7 @@ do
         --image-id $ami_id \
         --instance-type $instance_type \
         --security-groups "my-ip" "roboshop-${instance}" \
-        --tag-specifications "ResourceType=instance,Tags=[{key=Name,Value=roboshop-${Instance}}]" \
+        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=roboshop-${instance}}]" \
         --query 'Instances[0].InstanceId' \
         --output text
     )
@@ -22,7 +22,7 @@ do
 
     # Fetch the IP Addresses
     echo "Fetching the Ip Addresses"
-    if [ $instance -ne "frontend" ]; then
+    if [ $instance != "frontend" ]; then
         IP=$(aws ec2 describe-instances --instance-ids $instance_id \
             --query 'Reservations[].Instances[].PrivateIpAddress' --output text
         )
