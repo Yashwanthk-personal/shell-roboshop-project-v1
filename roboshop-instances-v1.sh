@@ -13,7 +13,7 @@ do
         --image-id $ami_id \
         --instance-type $instance_type \
         --security-groups "my-ip" "roboshop-${instance}" \
-        --tag-specification "ResourceType=instance,Tags[{key=Name,Value=roboshop-${Instance}}]" \
+        --tag-specifications "ResourceType=instance,Tags=[{key=Name,Value=roboshop-${Instance}}]" \
         --query 'Instances[0].InstanceId' \
         --output text
     )
