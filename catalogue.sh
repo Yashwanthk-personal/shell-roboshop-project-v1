@@ -14,42 +14,38 @@ N="\e[0m"
 
 # Check current user is having sudo access
 if [ $user_id -ne 0 ]; then
-    echo "Please run the script with sudo access"
+    echo "Please run this script with sudo access.."
     exit 1
 fi
 
-# Creating logs folder for Roboshop project
-mkdir -p /${logs_folder}
+mkdir -p $logs_folder
 
 timestamp(){
-    date "+%F %T"
+    date "+%F %T" 
 }
 
 validate(){
-    if [ $? -ne 0 ]; then 
-        echo -e "$(timestamp) [ERROR] ${2}...... ${R}FAILED${N}" | tee -a $logs_file
+    if [ $1 -ne 0 ]; then
+        echo -e "$(timestamp) [ERROR] ${2}..${R}FAILED${N}" | tee -a $logs_file
         exit 1
     else
-        echo -e "$(timestamp) [INFO] ${2}...... ${G}SUCCESS${N}" | tee -a $logs_file
+        echo -e "$(timestamp) [INFO] ${2}..${G}SUCCESS${N}" | tee -a $logs_file
     fi
 }
 
-echo "$(timestamp) [INFO] =========== SCRIPT EXECUTION STARTED ==============" | tee -a $logs_file
+echo "$(timestamp) [INFO] ==== Script started Execution =====" | tee -a $logs_file
 
-dnf module disable nodejs -y &>> logs_file
-dnf module enable nodejs:24 -y &>> logs_file
-dnf install nodejs -y &>> logs_file
-validate $? "Installing nodejs v24"
+dnf module disable nodejs -y &>> $logs_file
+dnf module enable nodejs:24 -y &>> $logs_file
+dnf install nodejs -y &>> $logs_file
+validate $? "Installing nodejs 24"
 
-echo "Node Version for catalogue service: $(node -v)" | tee -a $logs_file
-
-# Creating Roboshop user after validating it's existance
 id roboshop &>> $logs_file
-if [ $? -ne 0]; then
+if [ $? -ne 0 ]; then
     useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>> $logs_file
-    validate $? "Creating System User as roboshop for catalogue service"
+    validate $? "Creating system user"
 else
-    echo -e "$(timestamp) [INFO] roboshop is already created!... ${Y}SKIPPING${N}"
+    echo -e "$(timestamp) [INFO] System user roboshop already exist...${Y}SKIPPING${N}"
 fi
 
 rm -rf /app
@@ -59,47 +55,42 @@ mkdir -p /app
 validate $? "Creating app directory"
 
 curl -L -o /tmp/catalogue.zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/catalogue-v4.zip &>> $logs_file
-validate $? "Download Catalogue service source code"
+validate $? "Downloading catalogue"
 
 cd /app
 unzip /tmp/catalogue.zip &>> $logs_file
-validate $? "Unzipping catalogue service source code"
+validate $? "Unzipping catalogue"
 
 npm install &>> $logs_file
 validate $? "Installing dependencies"
 
 sed -i "s/DOMAIN_NAME/$domain_name/g" "${service_file_dir}/catalogue.service"
 cp "${service_file_dir}/catalogue.service" /etc/systemd/system/catalogue.service
-validate $? "Creating Catalogue Service File"
 
 systemctl daemon-reload &>> $logs_file
-systemctl enable --now catalogue &>> $logs_file
-validate $? "Enabling and Starting catalogue service"
+systemctl enable catalogue &>> $logs_file
+systemctl start catalogue &>> $logs_file
+validate $? "Starting and enabling catalogue"
 
-cp "${repo_dir}/mongo.repo" /etc/yum.repos.d/mongo.repo
+cp "${repos_dir}/mongo.repo" /etc/yum.repos.d/mongo.repo
 validate $? "Adding Mongo repo"
 
 dnf install mongodb-mongosh -y &>> $logs_file
-validate $? "Installing Mongodb Client"
+validate $? "Installing MongoDB Client"
 
-# Fetching the products count, for data seeding and redirecting only error logs into logs file
 product_count=$(mongosh --host "mongodb.$domain_name" --quiet --eval 'db.getSiblingDB("catalogue").products.countDocuments()' 2>> $logs_file)
 validate $? "Connecting to MongoDB"
 
 if [ "$product_count" -eq 0 ]; then
     mongosh --host "mongodb.$domain_name" </app/db/master-data.js &>> $logs_file
-    validate $? "Seeding products into Mongodb"
+    validate $? "Loading products"
 else
-    echo -e "$(timestamp) [INFO] Products are already seeded...${Y}SKIPPING${N}"
+    echo -e "$(timestamp) [INFO] Products are already loaded...${Y}SKIPPING${N}"
 fi
 
 systemctl restart catalogue
 validate $? "Restarting Catalogue"
 
-journalctl -u catalogue -f | tee -a $logs_file
-curl http://localhost:8080/health | tee -a $logs_file
-
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
 echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
-
 
