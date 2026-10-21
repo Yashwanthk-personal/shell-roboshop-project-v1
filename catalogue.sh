@@ -52,11 +52,11 @@ else
     echo -e "$(timestamp) [INFO] roboshop is already created!... ${Y}SKIPPING${N}"
 fi
 
-mkdir -p /app
-validate $? "Creating app directory"
-
 rm -rf /app
 validate $? "Removing old code"
+
+mkdir -p /app
+validate $? "Creating app directory"
 
 curl -L -o /tmp/catalogue.zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/catalogue-v4.zip &>> $logs_file
 validate $? "Download Catalogue service source code"
