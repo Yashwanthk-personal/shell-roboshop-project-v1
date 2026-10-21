@@ -1,0 +1,106 @@
+#!/bin/bash
+
+user_id=$(id -u)
+logs_folder="/var/log/roboshop"
+logs_file="${logs_folder}/${0}.log"
+domain_name="devops92s.store"
+scripts_dir=$( dirname "$(realpath "$0")" )
+service_file_dir="${scripts_dir}/service_files"
+repo_dir="${scripts_dir}/repos"
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+
+# Check current user is having sudo access
+if [user_id -ne 0]; then
+    echo "Please run the script with sudo access"
+    exit 1
+fi
+
+# Creating logs folder for Roboshop project
+mkdir -p /${logs_folder}
+
+timestamp(){
+    date "+%F %T"
+}
+
+validate(){
+    if [$? -ne 0]; then 
+        echo -e "$(timestamp) [ERROR] ${2}...... ${R}FAILED${N}" | tee -a $logs_file
+        exit 1
+    else
+        echo -e "$(timestamp) [INFO] ${2}...... ${G}SUCCESS${N}" | tee -a $logs_file
+    fi
+}
+
+echo "$(timestamp) [INFO] =========== SCRIPT EXECUTION STARTED ==============" | tee -a $logs_file
+
+dnf module disable nodejs -y &>> logs_file
+dnf module enable nodejs:24 -y &>> logs_file
+dnf install nodejs -y &>> logs_file
+validate $? "Installing nodejs v24"
+
+echo "Node Version for catalogue service: $(node -v)" | tee -a $logs_file
+
+# Creating Roboshop user after validating it's existance
+id roboshop &>> $logs_file
+if [ $? -ne 0]; then
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>> $logs_file
+    validate $? "Creating System User as roboshop for catalogue service"
+else
+    echo -e "$(timestamp) [INFO] roboshop is already created!... ${Y}SKIPPING${N}"
+fi
+
+mkdir -p /app
+validate $? "Creating app directory"
+
+rm -rf /app
+validate $? "Removing old code"
+
+curl -L -o /tmp/catalogue.zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/catalogue-v4.zip &>> $logs_file
+validate $? "Download Catalogue service source code"
+
+cd /app
+unzip /tmp/catalogue.zip &>> $logs_file
+validate $? "Unzipping catalogue service source code"
+
+npm install &>> $logs_file
+validate $? "Installing dependencies"
+
+sed -i "s/DOMAIN_NAME/$domain_name/g" "${service_file_dir}/catalogue.service"
+cp "${service_file_dir}/catalogue.service" /etc/systemd/system/catalogue.service
+validate $? "Creating Catalogue Service File"
+
+systemctl daemon-reload &>> $logs_file
+systemctl enable --now catalogue &>> $logs_file
+validate $? "Enabling and Starting catalogue service"
+
+cp "${repo_dir}/mongo.repo" /etc/yum.repos.d/mongo.repo
+validate $? "Adding Mongo repo"
+
+dnf install mongodb-mongosh -y &>> $logs_file
+validate $? "Installing Mongodb Client"
+
+# Fetching the products count, for data seeding and redirecting only error logs into logs file
+product_count=$(mongosh --host "mongodb.$domain_name" --quiet --eval 'db.getSiblingDB("catalogue").products.countDocuments()' 2>> $logs_file)
+validate $? "Connecting to MongoDB"
+
+if [ "$product_count" -eq 0 ]; then
+    mongosh --host "mongodb.$domain_name" </app/db/master-data.js &>> $logs_file
+    validate $? "Seeding products into Mongodb"
+else
+    echo -e "$(timestamp) [INFO] Products are already seeded...${Y}SKIPPING${N}"
+fi
+
+systemctl restart catalogue
+validate $? "Restarting Catalogue"
+
+journalctl -u catalogue -f | tee -a $logs_file
+curl http://localhost:8080/health | tee -a $logs_file
+curl http://localhost:8080/products | tee -a $logs_file
+
+echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
+echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
+
+
