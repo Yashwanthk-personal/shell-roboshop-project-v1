@@ -13,7 +13,7 @@ Y="\e[33m"
 N="\e[0m"
 
 # Check current user is having sudo access
-if [user_id -ne 0]; then
+if [$user_id -ne 0]; then
     echo "Please run the script with sudo access"
     exit 1
 fi
