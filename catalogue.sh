@@ -98,7 +98,6 @@ validate $? "Restarting Catalogue"
 
 journalctl -u catalogue -f | tee -a $logs_file
 curl http://localhost:8080/health | tee -a $logs_file
-curl http://localhost:8080/products | tee -a $logs_file
 
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
 echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
