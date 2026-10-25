@@ -48,10 +48,10 @@ else
 fi
 
 rm -rf /app
-validate $? "Removing Old App Directory
+validate $? "Removing Old App Directory"
 
 mkdir -p /app
-validate $? "Creating New App Directory
+validate $? "Creating New App Directory"
 
 curl -L -o /tmp/user.zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/user-v4.zip &>> $logs_file
 validate $? "Downloading User Service Source Code"
