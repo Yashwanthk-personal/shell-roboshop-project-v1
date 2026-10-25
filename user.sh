@@ -39,7 +39,7 @@ dnf module enable nodejs:24 -y &>> $logs_file
 dnf install nodejs -y &>> $logs_file
 validate $? "Installing Nodejs"
 
-id roboshop &>> logs_file
+id roboshop &>> $logs_file
 if [ $? -ne 0 ]; then    
     useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>> $logs_file
     validate $? "Creating roboshop System User"

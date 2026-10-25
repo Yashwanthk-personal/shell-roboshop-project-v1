@@ -12,7 +12,7 @@ G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
-if [ user_id -ne 0]; then
+if [ $user_id -ne 0]; then
     echo "Please run this script with sudo access....."
     exit 1
 fi
@@ -20,7 +20,7 @@ fi
 mkdir -p $logs_folder
 
 timestamp() {
-    data "+%F %T"
+    date "+%F %T"
 }
 
 validate(){
@@ -72,13 +72,13 @@ systemctl enable --now payment &>> $logs_file
 systemctl restart payment &>> $logs_file
 validate $? "Enabling, Starting and Restarting Payment service"
 
-systemctl status payment
+systemctl status payment | tee -a $logs_file
 validate $? "Checking Payment Service Status"
 
-journalctl -u payment -f
+journalctl -u payment -f | tee -a $logs_file
 validate $? "Checking Payment Service Logs"
 
-curl http://localhost:8080/health
+curl http://localhost:8080/health | tee -a $logs_file
 validate $? "Payment backend service health check"
 
 echo "$(timestamp) [INFO] Script completed in ${SECONDS} seconds"

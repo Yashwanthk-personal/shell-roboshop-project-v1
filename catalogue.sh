@@ -68,8 +68,7 @@ sed -i "s/DOMAIN_NAME/$domain_name/g" "${service_file_dir}/catalogue.service"
 cp "${service_file_dir}/catalogue.service" /etc/systemd/system/catalogue.service
 
 systemctl daemon-reload &>> $logs_file
-systemctl enable catalogue &>> $logs_file
-systemctl start catalogue &>> $logs_file
+systemctl enable --now catalogue &>> $logs_file
 validate $? "Starting and enabling catalogue"
 
 cp "${repos_dir}/mongo.repo" /etc/yum.repos.d/mongo.repo
@@ -82,7 +81,7 @@ product_count=$(mongosh --host "mongodb.$domain_name" --quiet --eval 'db.getSibl
 validate $? "Connecting to MongoDB"
 
 if [ "$product_count" -eq 0 ]; then
-    mongosh --host "mongodb.$domain_name" </app/db/master-data.js &>> $logs_file
+    mongosh --host "mongodb.${domain_name}" </app/db/master-data.js &>> $logs_file
     validate $? "Loading products"
 else
     echo -e "$(timestamp) [INFO] Products are already loaded...${Y}SKIPPING${N}"
@@ -93,4 +92,3 @@ validate $? "Restarting Catalogue"
 
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
 echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
-

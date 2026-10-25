@@ -12,7 +12,7 @@ G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
-if [ user_id -ne 0]; then   
+if [ $user_id -ne 0]; then   
     echo "Please run this script with sudo access....."
     exit 1
 fi
@@ -20,7 +20,7 @@ fi
 mkdir -p $logs_folder
 
 timestamp() {
-    data "+%F %T"
+    date "+%F %T"
 }
 
 validate(){
@@ -37,9 +37,9 @@ echo "$(timestamp) [INFO] ========= SCRIPT STARTED EXECUTION ===========" | tee 
 dnf module disable nodejs -y
 dnf module enable nodejs:24 -y
 dnf install nodejs -y
-validate $? "Installing Nodejs"
+validate $? "Installing Nodejs 24"
 
-id roboshop &>> logs_file
+id roboshop &>> $logs_file
 if [ $? -ne 0]; then    
     useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>> $logs_file
     validate $? "Creating roboshop System User"
@@ -50,7 +50,7 @@ fi
 rm -rf /app
 validate $? "Removing Old App Directory
 
-mkdir /app
+mkdir -p /app
 validate $? "Creating New App Directory
 
 curl -L -o /tmp/cart.zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/cart-v4.zip &>> $logs_file
@@ -63,8 +63,8 @@ validate $? "Unzipping User Service Source Code"
 npm install &>> $logs_file
 validate $? "Installing NPM dependencies"
 
-sed -i "s/DOMAIN_NAME/$domain_name/g" "$scripts_dir/cart.service"
-cp "$scripts_dir/cart.service" /etc/systemd/system/cart.service
+sed -i "s/DOMAIN_NAME/${domain_name}/g" "${service_file_dir}/cart.service"
+cp "${service_file_dir}/cart.service" /etc/systemd/system/cart.service
 
 systemctl daemon-reload &>> $logs_file
 systemctl enable --now cart &>> $logs_file

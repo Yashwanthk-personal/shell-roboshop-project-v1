@@ -12,7 +12,7 @@ G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
-if [ user_id -ne 0]; then   
+if [ $user_id -ne 0]; then   
     echo "Please run this script with sudo access....."
     exit 1
 fi
@@ -20,7 +20,7 @@ fi
 mkdir -p $logs_folder
 
 timestamp() {
-    data "+%F %T"
+    date "+%F %T"
 }
 
 validate(){
@@ -84,7 +84,7 @@ if [ -z "$count" ] || [ "$count" -eq 0 ]; then
     mysql -h "mysql.$domain_name" -uroot -pRoboShop@1 < /app/db/master-data.sql
     validate $? "Loading shipping data"
 else
-    echo -e "$(timestamp) [INFO] Master data already loaded...${Y}SKIPPING${N}"
+    echo -e "$(timestamp) [INFO] Master data already loaded... ${Y}SKIPPING${N}"
 fi
 
 mysql -h "mysql.$domain_name" -uroot -pRoboShop@1 < /app/db/app-user.sql
@@ -97,19 +97,18 @@ validate $? "Enabling and Starting shipping service"
 systemctl restart shipping &>> $logs_file
 validate $? "Restarting shipping service"
 
-systemctl status shipping &>> $logs_file
+systemctl status shipping | tee -a $logs_file
 validate $? "Checking Shipping Service Status"
 
-journalctl -u shipping -f &>> $logs_file
+journalctl -u shipping -f | tee -a $logs_file
 validate $? "Checking Shipping Service Logs"
 
-curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/health | tee -a $logs_file
 validate $? "Shipping backend service health check"
 
-curl http://localhost:8080/count
-curl http://localhost:8080/codes
+curl http://localhost:8080/count | tee -a $logs_file
+curl http://localhost:8080/codes | tee -a $logs_file
 validate $? "Data Seeding into MySql DB...."
-
 
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
 echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
