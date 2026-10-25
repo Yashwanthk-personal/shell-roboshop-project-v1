@@ -32,55 +32,47 @@ validate(){
     fi
 }
 
-echo "$(timestamp) [INFO] ========= SCRIPT STARTED EXECUTION ===========" | tee -a $logs_file
+echo "$(timestamp) [INFO] ==== Script started Execution =====" | tee -a $logs_file
 
 dnf module disable nodejs -y &>> $logs_file
 dnf module enable nodejs:24 -y &>> $logs_file
 dnf install nodejs -y &>> $logs_file
-validate $? "Installing Nodejs 24"
+validate $? "Installing nodejs 24"
 
 id roboshop &>> $logs_file
-if [ $? -ne 0]; then    
+if [ $? -ne 0 ]; then
     useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>> $logs_file
-    validate $? "Creating roboshop System User"
-else 
-    echo -e "$(timestamp) [INFO] System user roboshop already exist... ${Y}SKIPPING${N}"
+    validate $? "Creating system user"
+else
+    echo -e "$(timestamp) [INFO] System user roboshop already exist...${Y}SKIPPING${N}"
 fi
 
 rm -rf /app
-validate $? "Removing Old App Directory"
+validate $? "Removing old code"
 
 mkdir -p /app
-validate $? "Creating New App Directory"
+validate $? "Creating app directory"
 
 curl -L -o /tmp/cart.zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/cart-v4.zip &>> $logs_file
-validate $? "Downloading User Service Source Code"
+validate $? "Downloading cart"
 
 cd /app
 unzip /tmp/cart.zip &>> $logs_file
-validate $? "Unzipping User Service Source Code"
+validate $? "Unzipping cart"
 
 npm install &>> $logs_file
-validate $? "Installing NPM dependencies"
+validate $? "Installing dependencies"
 
-sed -i "s/DOMAIN_NAME/${domain_name}/g" "${service_file_dir}/cart.service"
+sed -i "s/DOMAIN_NAME/$domain_name/g" "${service_file_dir}/cart.service"
 cp "${service_file_dir}/cart.service" /etc/systemd/system/cart.service
 
 systemctl daemon-reload &>> $logs_file
-systemctl enable --now cart &>> $logs_file
-validate $? "Enabling and Starting cart service"
+systemctl enable cart &>> $logs_file
+systemctl start cart &>> $logs_file
+validate $? "Starting and enabling cart"
 
-systemctl restart cart &>> $logs_file
-validate $? "Restarting cart service"
-
-systemctl status cart &>> $logs_file
-validate $? "Checking User Service Status"
-
-journalctl -u cart -f &>> $logs_file
-validate $? "Checking User Service Logs"
-
-curl http://localhost:8080/health &>> $logs_file
-validate $? "User backend service health check"
+systemctl restart cart
+validate $? "Restarting cart"
 
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
 echo "$(timestamp) [INFO] ==== Script completed Execution =====" | tee -a $logs_file
