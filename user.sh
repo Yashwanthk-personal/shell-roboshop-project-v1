@@ -12,7 +12,7 @@ G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
-if [ user_id -ne 0]; then   
+if [ user_id -ne 0 ]; then   
     echo "Please run this script with sudo access....."
     exit 1
 fi
@@ -40,7 +40,7 @@ dnf install nodejs -y
 validate $? "Installing Nodejs"
 
 id roboshop &>> logs_file
-if [ $? -ne 0]; then    
+if [ $? -ne 0 ]; then    
     useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>> $logs_file
     validate $? "Creating roboshop System User"
 else 
