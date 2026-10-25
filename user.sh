@@ -73,13 +73,13 @@ validate $? "Enabling and Starting user service"
 systemctl restart user &>> $logs_file
 validate $? "Restarting user service"
 
-systemctl status user &>> tee -a $logs_file
+systemctl status user | tee -a $logs_file
 validate $? "Checking User Service Status"
 
-journalctl -u user -f tee -a $logs_file
+journalctl -u user -f | tee -a $logs_file
 validate $? "Checking User Service Logs"
 
-curl http://localhost:8080/health tee -a $logs_file
+curl http://localhost:8080/health | tee -a $logs_file
 validate $? "User backend service health check"
 
 echo "$(timestamp) [INFO] Script completed in $SECONDS seconds"
