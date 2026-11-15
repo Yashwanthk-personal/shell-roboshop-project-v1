@@ -4,7 +4,6 @@ ami_id="ami-0055977a6e828a4f4"
 instance_type="t3.micro"
 domain_name="devops92s.store"
 hosted_zone_id="Z07125641OXP8SCNSKD6L"
-TTL=1
 
 
 for instance in $@
@@ -38,10 +37,10 @@ do
                 {
                     "Action": "UPSERT",
                     "ResourceRecordSet": {
-                    "Name": "${r53_record}",
+                    "Name": "'${r53_record}'",
                     "Type": "A",
-                    "TTL": $TTL,
-                    "ResourceRecords": [{"Value": "${IP}}"}]
+                    "TTL": 1,
+                    "ResourceRecords": [{"Value": "'$IP'"}]
                     }
                 }
             ]
