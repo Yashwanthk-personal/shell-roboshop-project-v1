@@ -10,6 +10,8 @@ G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
+echo "${repo_folder} and ${service_folder}"
+
 if [ $user_id -ne 0 ]; then 
     echo "Please run this script with Root access or with Sudo"
     exit 1
