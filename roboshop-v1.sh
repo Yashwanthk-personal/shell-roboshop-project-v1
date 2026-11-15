@@ -16,15 +16,19 @@ do
             --query 'Instances[0].InstanceId' \
             --output text)
         
-        echo "$instance created with instance ID: $instance_id, Public IP: Reservations[0].Instances[0].PublicIpAddress"
+        public_ip=$(aws ec2 describe-instances --instance-ids "$instance_id" \
+                            --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+        
+        private_ip=$(aws ec2 describe-instances --instance-ids "$instance_id" \
+                            --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
+
+        echo "$instance created with instance ID: $instance_id, Public IP: $public_ip"
 
         if [ $instance != "frontend" ]; then
-            IP=$(aws ec2 describe-instances --instance-ids "$instance_id" \
-                            --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
+            IP=$private_ip
             r53_record="${instance}.${domain_name}"
         else
-            IP=$(aws ec2 describe-instances --instance-ids "$instance_id" \
-                            --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+            IP=$public_ip
             r53_record="${domain_name}"
         fi
     
