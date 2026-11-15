@@ -16,7 +16,7 @@ do
             --query 'Instances[0].InstanceId' \
             --output text)
         
-        echo "$instance created with instance ID: $instance_id, Public IP: Reservations[0].Instances[0].PublicIpAddress"
+        echo "$instance created with instance ID: $instance_id"
 
         if [ $instance != "frontend" ]; then
             IP=$(aws ec2 describe-instances --instance-ids "$instance_id" \
