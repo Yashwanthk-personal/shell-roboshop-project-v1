@@ -16,7 +16,7 @@ do
             --query 'Instances[0].InstanceId' \
             --output text)
         
-        echo "$instance instance ID: $instance_id"
+        echo "$instance created with instance ID: $instance_id, Public IP: Reservations[0].Instances[0].PublicIpAddress"
 
         if [ $instance != "frontend" ]; then
             IP=$(aws ec2 describe-instances --instance-ids "$instance_id" \
@@ -28,7 +28,7 @@ do
             r53_record="${domain_name}"
         fi
     
-        echo "Record: ${r53_record}"
+        echo "Creating Route53 Record....."
         
         aws route53 change-resource-record-sets \
             --hosted-zone-id "$hosted_zone_id" \
