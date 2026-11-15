@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
+
 ami_id="ami-0055977a6e828a4f4"
 instance_type="t3.micro"
 domain_name="devops92s.store"
