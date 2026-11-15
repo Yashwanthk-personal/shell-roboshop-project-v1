@@ -37,7 +37,7 @@ do
                 {
                     "Action": "UPSERT",
                     "ResourceRecordSet": {
-                    "Name": "${r53_records}",
+                    "Name": "${r53_record}",
                     "Type": "A",
                     "TTL": $TTL,
                     "ResourceRecords": [{"Value": "${IP}}"}]
